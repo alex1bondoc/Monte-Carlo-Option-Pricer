@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(benchmark REQUIRED)
 
 # biblioteca cu codul de calcul
 add_library(mc_lib src/europe.cpp src/america.cpp)
@@ -28,3 +29,6 @@ target_link_libraries(mc_tests PRIVATE mc_lib GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(mc_tests)
+
+add_executable(mc_bench benchmarks/bench.cpp)
+target_link_libraries(mc_bench PRIVATE mc_lib benchmark::benchmark)
