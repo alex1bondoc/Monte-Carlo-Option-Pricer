@@ -1,0 +1,3 @@
+[submodule "random123"]
+	path = random123
+	url = https://github.com/DEShawResearch/random123
