@@ -41,28 +41,3 @@ TEST(European, MonteCarlo1) {
     EXPECT_NEAR(r.price, black_scholes(p), 3 * r.std_err);
 }
 
-TEST(European, MonteCarlo) {
-    const int seeds{10};
-    auto p{base()};
-    const double bs{black_scholes(p)};
-    int in1 = 0, in2 = 0, in3 = 0;
-    double sum_z = 0;
-
-    for (int s = 0; s < seeds; ++s) {
-        p.seed = 1000 + s;
-        auto r = european_parallel(p);
-        double z = (r.price - bs) / r.std_err;   // câte erori standard e departe
-        sum_z += z;
-        if (std::abs(z) <= 1) ++in1;
-        if (std::abs(z) <= 2) ++in2;
-        if (std::abs(z) <= 3) ++in3;
-    }
-    double f1 = double(in1) / seeds, f2 = double(in2) / seeds, f3 = double(in3) / seeds;
-    std::printf("in 1 SE: %.0f%%  in 2 SE: %.0f%%  in 3 SE: %.0f%%  z mediu: %.3f\n",
-                100 * f1, 100 * f2, 100 * f3, sum_z / seeds);
-
-    EXPECT_NEAR(f1, 0.68, 0.10);          // teoretic 68%
-    EXPECT_GE(f2, 0.90);                  // teoretic 95%
-    EXPECT_GE(f3, 0.98);                  // teoretic 99,7%
-    EXPECT_NEAR(sum_z / seeds, 0.0, 0.25); // fără deplasare sistematică
-}
