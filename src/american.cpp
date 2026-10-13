@@ -70,9 +70,7 @@ Result american(const Params& p) {
             s *= std::exp(drift + vol * normal(p.seed, path, step));
             S[static_cast<size_t>(step) * p.paths + path] = s;
         }
-
     }
-
     std::vector<double> cash(p.paths);
     for (long path{}; path < p.paths; ++path) {
         cash[path] = std::max(p.K - S[static_cast<size_t>(p.paths) * (p.steps - 1) + path], 0.0);
