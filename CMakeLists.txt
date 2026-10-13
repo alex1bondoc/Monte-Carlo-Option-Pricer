@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)
 
-add_executable(mc_cli src/main.cpp)
-target_include_directories(mc_cli PRIVATE include third_party/random123/include)
+add_executable(mc_cli src/main.cpp src/european.cpp)
+
+target_include_directories(mc_cli PRIVATE include/mc third_party/random123/include)
 target_link_libraries(mc_cli PRIVATE Threads::Threads)
+
