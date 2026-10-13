@@ -15,14 +15,17 @@ namespace {
 }
 
 Result european(const Params& p) {
-    auto drift = (p.r - p.sigma * p.sigma / 2) * p.T;
-    auto vol = p.sigma * std::sqrt(p.T);
+    const double dt    = p.T / p.steps;
+    const double drift = (p.r - 0.5 * p.sigma * p.sigma) * dt;
+    const double vol   = p.sigma * std::sqrt(dt);
     auto sum = 0.0;
     auto sum_sq = 0.0;
     for (int i{}; i < p.paths; ++i) {
-        auto Z = normal(p.seed, i, 0);
-        auto SI = p.S0 * std::exp(drift + vol * Z);
-        auto payoff = std::max(p.K - SI, 0.0);
+        double s = p.S0;
+        for (int t{}; t < p.steps; ++t) {
+            s *=  std::exp(drift + vol * normal(p.seed, i, t));
+        }
+        auto payoff = std::max(p.K - s, 0.0);
         sum += payoff;
         sum_sq += payoff * payoff;
     }
@@ -34,8 +37,9 @@ Result european(const Params& p) {
 }
 
 Result european_parallel(const Params& p, const int N) {
-    auto drift = (p.r - p.sigma * p.sigma / 2) * p.T;
-    auto vol = p.sigma * std::sqrt(p.T);
+    const double dt    = p.T / p.steps;
+    const double drift = (p.r - 0.5 * p.sigma * p.sigma) * dt;
+    const double vol   = p.sigma * std::sqrt(dt);
     std::vector<Partial> partials(N);
     std::vector<std::thread> threads;
 
@@ -47,8 +51,11 @@ Result european_parallel(const Params& p, const int N) {
             double sum = 0.0;
             double sum_sq = 0.0;
             for (long i{begin}; i < end; ++i) {
-                const double ST = p.S0 * std::exp(drift + vol * normal(p.seed, i, 0));
-                const double payoff = std::max(p.K - ST, 0.0);
+                double s = p.S0;
+                for (int j{}; j < p.steps; ++j) {
+                    s *= std::exp(drift + vol * normal(p.seed, i, j));
+                }
+                auto payoff = std::max(p.K - s, 0.0);
                 sum += payoff;
                 sum_sq += payoff * payoff;
             }

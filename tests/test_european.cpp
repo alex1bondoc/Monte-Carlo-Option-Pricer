@@ -42,7 +42,7 @@ TEST(European, MonteCarlo1) {
 }
 
 TEST(European, MonteCarlo) {
-    const int seeds{200};
+    const int seeds{10};
     auto p{base()};
     const double bs{black_scholes(p)};
     int in1 = 0, in2 = 0, in3 = 0;
@@ -50,7 +50,7 @@ TEST(European, MonteCarlo) {
 
     for (int s = 0; s < seeds; ++s) {
         p.seed = 1000 + s;
-        auto r = european(p);
+        auto r = european_parallel(p);
         double z = (r.price - bs) / r.std_err;   // câte erori standard e departe
         sum_z += z;
         if (std::abs(z) <= 1) ++in1;

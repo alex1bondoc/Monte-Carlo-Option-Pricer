@@ -9,5 +9,5 @@ public:
     double T = 1.0;
     int steps = 252;
     long paths = 1'000'000;
-    uint32_t seed = 100;
+    uint32_t seed = 42;
 };

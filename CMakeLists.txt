@@ -19,7 +19,7 @@ target_link_libraries(mc_tests PRIVATE GTest::gtest_main)
 include (GoogleTest)
 gtest_discover_tests(mc_tests)
 
-add_executable(mc_cli src/main.cpp src/european.cpp)
+add_executable(mc_cli src/main.cpp src/european.cpp src/american.cpp)
 
 target_include_directories(mc_cli PRIVATE include/mc third_party/random123/include)
 target_link_libraries(mc_cli PRIVATE Threads::Threads)

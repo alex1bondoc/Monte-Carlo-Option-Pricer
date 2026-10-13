@@ -5,7 +5,7 @@
 
 int main() {
     Params p{};
-    Result r = european(p);
+    Result r = american(p);
 
     std::cout << "MC: " << r.price << " +/- " << r.std_err << std::endl;
     std::cout << "Black-Scholes: " << black_scholes(p) << std::endl;
