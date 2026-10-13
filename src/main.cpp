@@ -9,8 +9,8 @@ int main() {
         0.06,  // r
         0.2,   // sigma
         1.0,   // T
-        1'000'000, // paths
-        365,    // steps
+        10, // paths
+        3,    // steps
         42      // seed
     };
 
