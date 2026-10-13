@@ -37,7 +37,7 @@ TEST(European, BlackScholes) {
 
 TEST(European, MonteCarlo1) {
     auto p = base();
-    auto r = european(p);
+    auto r = european_parallel(p);
     EXPECT_NEAR(r.price, black_scholes(p), 3 * r.std_err);
 }
 
