@@ -1,5 +1,6 @@
 [requires]
 gtest/1.15.0
+eigen/3.4.0
 
 [generators]
 CMakeDeps

@@ -7,14 +7,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # biblioteca cu codul de calcul
-add_library(mc_lib src/europe.cpp)
+add_library(mc_lib src/europe.cpp src/america.cpp)
 target_include_directories(mc_lib PUBLIC
     include
     random123/include
 )
-target_link_libraries(mc_lib PUBLIC Threads::Threads)
+target_link_libraries(mc_lib PUBLIC Threads::Threads Eigen3::Eigen)
 
 # programul
 add_executable(mc src/main.cpp)
