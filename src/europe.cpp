@@ -41,7 +41,7 @@ Result european_threads(const Params& params, int num_threads) {
     std::vector<double> sums_sq(num_threads, 0.0);
     std::vector<std::thread> threads{};
     for (int thread_id{}; thread_id < num_threads; ++thread_id) {
-        threads.emplace_back([&, thread_id]() {
+        threads.emplace_back([&sums, &sums_sq, &params, &drift, &volatility, num_threads, thread_id]() {
             long start = (params.paths * thread_id) / num_threads;
             long end = (params.paths * (thread_id + 1)) / num_threads;
             double sum{};

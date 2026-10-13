@@ -17,7 +17,7 @@ static void benchmark_european(benchmark::State& state) {
     }
 }
 BENCHMARK(benchmark_european)
-    ->Args({100'000, 252})
+    ->Args({1'000'000, 365})
     ->Unit(benchmark::kMillisecond);
 
 static void benchmark_european_threads(benchmark::State& state) {
@@ -28,7 +28,32 @@ static void benchmark_european_threads(benchmark::State& state) {
     }
 }
 BENCHMARK(benchmark_european_threads)
-    ->ArgsProduct({{100'000}, {252}, {2, 4, 6, 8, 12, 14, 16, 20}})
+    ->ArgsProduct({{1'000'000}, {365}, {1, 2, 4, 6, 8, 12, 14, 16, 20}})
+    ->UseRealTime()
+    ->Unit(benchmark::kMillisecond);
+
+static void benchmark_american(benchmark::State& state) {
+    const Params p = make_params(state.range(0), state.range(1));
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(american(p));
+    }
+}
+
+BENCHMARK(benchmark_american)
+    ->Args({1'000'000, 365})
+    ->UseRealTime()
+    ->Unit(benchmark::kMillisecond);
+
+static void benchmark_american_threads(benchmark::State& state) {
+    const Params p = make_params(state.range(0), state.range(1));
+    const int num_threads = static_cast<int>(state.range(2));
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(american_threads(p, num_threads));
+    }
+}
+
+BENCHMARK(benchmark_american_threads)
+    ->ArgsProduct({{1'000'000}, {365}, {1, 2, 4, 6, 8, 12, 14, 16, 20}})
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
 
