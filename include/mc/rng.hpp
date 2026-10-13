@@ -1,10 +1,11 @@
+#pragma once
 #include <Random123/philox.h>
 #include <Random123/uniform.hpp>
 #include <cstdint>
 #include <cmath>
 #include <numbers>
 
-double normal(uint32_t seed, long path, int step) {
+inline double normal(uint32_t seed, long path, int step) {
     r123::Philox4x32 gen; 
     r123::Philox4x32::ctr_type ctr{{path, step, 0, 0}};
     r123::Philox4x32::key_type key{{seed, 0}};
