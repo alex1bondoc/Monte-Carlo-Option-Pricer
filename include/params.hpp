@@ -1,6 +1,11 @@
 #pragma once
 #include <cstdint>
 
+enum class OptionType {
+    Call,
+    Put
+};
+
 class Params {
 public:
     double S0{};
@@ -8,6 +13,7 @@ public:
     double r{};
     double sigma{};
     double T{};
+    OptionType option_type{};
 
     long paths{};
     long steps{};

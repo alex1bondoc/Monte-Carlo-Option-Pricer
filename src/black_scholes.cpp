@@ -2,7 +2,7 @@
 #include <cmath>
 
 double normal_cdf(double x) {
-    return 0.5 * std::erfc(-x * std::sqrt(2));
+    return 0.5 * std::erfc(-x / std::sqrt(2));
 }
 
 double black_scholes_call(const Params& params) {

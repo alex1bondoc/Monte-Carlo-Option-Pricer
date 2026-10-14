@@ -9,6 +9,7 @@ int main() {
         0.06,  // r
         0.2,   // sigma
         1.0,   // T
+        OptionType::Call, // option_type
         10, // paths
         3,    // steps
         42      // seed

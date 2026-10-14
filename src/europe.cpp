@@ -20,9 +20,9 @@ Result european(const Params& params) {
             double Z = normal(params.seed, path, step);
             S *= std::exp(drift + volatility * Z);
         }
-        const auto payoff = std::max(params.K - S, 0.0);
-        sum += payoff;
-        sum_sq += payoff * payoff;
+        const auto payoff_ = payoff(params, S);
+        sum += payoff_;
+        sum_sq += payoff_ * payoff_;
     }
 
     const auto mean = sum / params.paths;
@@ -52,9 +52,9 @@ Result european_threads(const Params& params, int num_threads) {
                     double Z = normal(params.seed, path, step);
                     S *= std::exp(drift + volatility * Z);
                 }
-                const auto payoff = std::max(params.K - S, 0.0);
-                sum += payoff;
-                sum_sq += payoff * payoff;
+                const auto payoff_ = payoff(params, S);
+                sum += payoff_;
+                sum_sq += payoff_ * payoff_;
             }
             sums[thread_id] = sum;
             sums_sq[thread_id] = sum_sq;

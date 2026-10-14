@@ -27,7 +27,7 @@ Result american(const Params& params) {
 
     std::vector<double> cash(N);
     for (size_t path = 0; path < N; ++path) {
-        cash[path] = std::max(params.K - S[(M - 1) * N + path], 0.0);
+        cash[path] = payoff(params, S[(M - 1) * N + path]);
     }
 
     for (int step = static_cast<int>(M) - 2; step >= 0; --step) {
@@ -37,7 +37,7 @@ Result american(const Params& params) {
         for (size_t path = 0; path < N; ++path) {
             cash[path] *= disc;
             auto s = S_step[path];
-            if (s < params.K) {
+            if (payoff(params, s) > 0) {
                 s = s / params.K;
                 A(0, 0)++;
                 A(0, 1) = A(1, 0) = (A(0, 1) + s); 
@@ -56,10 +56,10 @@ Result american(const Params& params) {
         const Eigen::Vector3d beta = A.ldlt().solve(b);
         for (size_t path = 0; path < N; ++path) {
             auto s = S_step[path];
-            if (s < params.K) {
+            if (payoff(params, s) > 0) {
                 s = s / params.K;
                 double continuation_value = beta(0) + beta(1) * s + beta(2) * s * s;
-                double exercise_value = params.K - S_step[path];
+                double exercise_value = payoff(params, s);
                 if (exercise_value > continuation_value) {
                     cash[path] = exercise_value;
                 }
@@ -80,7 +80,7 @@ Result american(const Params& params) {
     const auto price = std::exp(-params.r * params.T) * mean;
     const auto error = std::sqrt((sum_sq / N - mean * mean) / (N));
 
-    return {std::max(mean, params.K - params.S0), error};
+    return {std::max(mean, payoff(params, params.S0)), error};
 }
 
 Result american_threads(const Params& params, int num_threads) {
@@ -115,7 +115,7 @@ Result american_threads(const Params& params, int num_threads) {
                     double Z = normal(params.seed, path, step);
                     s *= std::exp(drift + volatility * Z);
                     S[step * N + path] = s;
-                    cash[path] = std::max(params.K - s, 0.0);
+                    cash[path] = payoff(params, s);
                 }
             }
             
@@ -134,7 +134,7 @@ Result american_threads(const Params& params, int num_threads) {
                 for (size_t path = start; path < end; ++path) {
                     cash[path] *= disc;
                     auto s = S_step[path];
-                    if (s < params.K) {
+                    if (payoff(params, s) > 0) {
                         s = s / params.K;
                         XtX_thread[0][0]++;
                         XtX_thread[0][1] += s;
@@ -175,10 +175,10 @@ Result american_threads(const Params& params, int num_threads) {
                 const Eigen::Vector3d beta = A.ldlt().solve(b);
                 for (size_t path = start; path < end; ++path) {
                     auto s = S_step[path];
-                    if (s < params.K) {
+                    if (payoff(params, s) > 0) {
                         s = s / params.K;
                         double continuation_value = beta(0) + beta(1) * s + beta(2) * s * s;
-                        double exercise_value = params.K - S_step[path];
+                        double exercise_value = payoff(params, s);
                         if (exercise_value > continuation_value) {
                             cash[path] = exercise_value;
                         }
@@ -214,5 +214,5 @@ Result american_threads(const Params& params, int num_threads) {
     const auto price = std::exp(-params.r * params.T) * mean;
     const auto error = std::sqrt((sum_sq / N - mean * mean) / (N));
 
-    return {std::max(mean, params.K - params.S0), error};
+    return {std::max(mean, payoff(params, params.S0)), error};
 }
