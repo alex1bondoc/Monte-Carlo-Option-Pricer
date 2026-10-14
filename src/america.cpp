@@ -56,10 +56,10 @@ Result american(const Params& params) {
         const Eigen::Vector3d beta = A.ldlt().solve(b);
         for (size_t path = 0; path < N; ++path) {
             auto s = S_step[path];
-            if (payoff(params, s) > 0) {
+            const double exercise_value = payoff(params, s);
+            if (exercise_value > 0) {
                 s = s / params.K;
                 double continuation_value = beta(0) + beta(1) * s + beta(2) * s * s;
-                double exercise_value = payoff(params, s);
                 if (exercise_value > continuation_value) {
                     cash[path] = exercise_value;
                 }
@@ -150,22 +150,24 @@ Result american_threads(const Params& params, int num_threads) {
                         XtY_thread[2] += cash[path] * s * s;
                     }
                 }
+                XtX[thread_id] = XtX_thread;
+                XtY[thread_id] = XtY_thread;
                 sync_point.arrive_and_wait();   
                 if (thread_id == 0) {
                     for (int i = 0; i < num_threads; ++i) {
-                        A(0, 0) += XtX_thread[0][0];
-                        A(0, 1) += XtX_thread[0][1];
-                        A(0, 2) += XtX_thread[0][2];
-                        A(1, 0) += XtX_thread[1][0];
-                        A(1, 1) += XtX_thread[1][1];
-                        A(1, 2) += XtX_thread[1][2];
-                        A(2, 0) += XtX_thread[2][0];
-                        A(2, 1) += XtX_thread[2][1];
-                        A(2, 2) += XtX_thread[2][2];
+                        A(0, 0) += XtX[i][0][0];
+                        A(0, 1) += XtX[i][0][1];
+                        A(0, 2) += XtX[i][0][2];
+                        A(1, 0) += XtX[i][1][0];
+                        A(1, 1) += XtX[i][1][1];
+                        A(1, 2) += XtX[i][1][2];
+                        A(2, 0) += XtX[i][2][0];
+                        A(2, 1) += XtX[i][2][1];
+                        A(2, 2) += XtX[i][2][2];
 
-                        b(0) += XtY_thread[0];
-                        b(1) += XtY_thread[1];
-                        b(2) += XtY_thread[2];
+                        b(0) += XtY[i][0];
+                        b(1) += XtY[i][1];
+                        b(2) += XtY[i][2];
                     }
                 }
                 sync_point.arrive_and_wait();
@@ -176,8 +178,8 @@ Result american_threads(const Params& params, int num_threads) {
                 for (size_t path = start; path < end; ++path) {
                     auto s = S_step[path];
                     if (payoff(params, s) > 0) {
-                        s = s / params.K;
-                        double continuation_value = beta(0) + beta(1) * s + beta(2) * s * s;
+                        const double x = s / params.K;
+                        double continuation_value = beta(0) + beta(1) * x + beta(2) * x * x;
                         double exercise_value = payoff(params, s);
                         if (exercise_value > continuation_value) {
                             cash[path] = exercise_value;

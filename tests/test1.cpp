@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "functions.hpp"
-#include "black_scholes.hpp"
+#include "validation.hpp"
 
 TEST(BlackScholes, Call) {
     Params p{
@@ -64,77 +64,102 @@ TEST(European, Put) {
     EXPECT_NEAR(result.price, black_scholes_put(p), 3 * result.error);
 }
 
-// TEST(Test, EuropeanOptionThreadsTest2) {
-//     Params p{
-//         36.0, // S0
-//         40.0, // K
-//         0.06,  // r
-//         0.2,   // sigma
-//         1.0,   // T
-//         1'000'000, // paths
-//         365,    // steps
-//         42
-//     };   // cu valorile implicite 36 / 40 / 0.06 / 0.2 / 1
-//     Result result = european_threads(p, 2);
-//     EXPECT_NEAR(result.price, 3.8443, 3 * result.error);
-// }
+TEST(European_Threads, Put) {
+    Params p{
+        36.0,             // S0
+        40.0,             // K
+        0.06,             // r
+        0.2,              // sigma
+        1.0,              // T
+        OptionType::Put,  // type
+        1'000'000,          // paths
+        365,               // steps
+        42                // seed
+    };
+    Result result = european_threads(p);
+    EXPECT_NEAR(result.price, black_scholes_put(p), 3 * result.error);
+}
 
-// TEST(Test, EuropeanOptionThreadsTest4) {
-//     Params p{
-//         36.0, // S0
-//         40.0, // K
-//         0.06,  // r
-//         0.2,   // sigma
-//         1.0,   // T
-//         1'000'000, // paths
-//         365,    // steps
-//         42
-//     };   // cu valorile implicite 36 / 40 / 0.06 / 0.2 / 1
-//     Result result = european_threads(p, 4);
-//     EXPECT_NEAR(result.price, 3.8443, 3 * result.error);
-// }
+TEST(European_Threads, Call) {
+    Params p{
+        36.0,             // S0
+        40.0,             // K
+        0.06,             // r
+        0.2,              // sigma
+        1.0,              // T
+        OptionType::Call,  // type
+        1'000'000,          // paths
+        365,               // steps
+        42                // seed
+    };
+    Result result = european_threads(p);
+    EXPECT_NEAR(result.price, black_scholes_call(p), 3 * result.error);
+}
 
-// TEST(Test, EuropeanOptionThreadsTest8) {
-//     Params p{
-//         36.0, // S0
-//         40.0, // K
-//         0.06,  // r
-//         0.2,   // sigma
-//         1.0,   // T
-//         1'000'000, // paths
-//         365,    // steps
-//         42
-//     };   // cu valorile implicite 36 / 40 / 0.06 / 0.2 / 1
-//     Result result = european_threads(p);
-//     EXPECT_NEAR(result.price, 3.8443, 3 * result.error);
-// }
+TEST(American, Put) {
+    Params p{
+        36.0,             // S0
+        40.0,             // K
+        0.06,             // r
+        0.2,              // sigma
+        1.0,              // T
+        OptionType::Put,  // type
+        100'000,          // paths
+        50,               // steps
+        42                // seed
+    };
+    Result result = american(p);
+    EXPECT_NEAR(result.price, 4.478, 3 * result.error);
+    EXPECT_GT(result.price, black_scholes_put(p));
+    EXPECT_GE(result.price, p.K - p.S0);
+}
 
-// TEST(Test, EuropeanOptionThreadsTest16) {
-//     Params p{
-//         36.0, // S0
-//         40.0, // K
-//         0.06,  // r
-//         0.2,   // sigma
-//         1.0,   // T
-//         1'000'000, // paths
-//         365,    // steps
-//         42
-//     };   // cu valorile implicite 36 / 40 / 0.06 / 0.2 / 1
-//     Result result = european_threads(p, 16);
-//     EXPECT_NEAR(result.price, 3.8443, 3 * result.error);
-// }
+TEST(American, Call) {
+    Params p{
+        36.0,             // S0
+        40.0,             // K
+        0.06,             // r
+        0.2,              // sigma
+        1.0,              // T
+        OptionType::Call,  // type
+        100'000,          // paths
+        50,               // steps
+        42                // seed
+    };
+    Result result = american(p);
+    EXPECT_NEAR(result.price, 2.1708, 3 * result.error);
+}
 
-// TEST(Test, AmericanOptionThreadsTest) {
-//     Params p{
-//         36.0, // S0
-//         40.0, // K
-//         0.06,  // r
-//         0.2,   // sigma
-//         1.0,   // T
-//         1'000'000, // paths
-//         365,    // steps
-//         42
-//     };   // cu valorile implicite 36 / 40 / 0.06 / 0.2 / 1
-//     Result result = american_threads(p);
-//     EXPECT_NEAR(result.price, 4.469, 3 * result.error);
-// }
+TEST(American_Threads, Call) {
+    Params p{
+        36.0,             // S0
+        40.0,             // K
+        0.06,             // r
+        0.2,              // sigma
+        1.0,              // T
+        OptionType::Call,  // type
+        100'000,          // paths
+        50,               // steps
+        42                // seed
+    };
+    Result result = american_threads(p);
+    EXPECT_NEAR(result.price, 2.1708, 3 * result.error);
+}
+
+TEST(American_Threads, Put) {
+    Params p{
+        36.0,             // S0
+        40.0,             // K
+        0.06,             // r
+        0.2,              // sigma
+        1.0,              // T
+        OptionType::Put,  // type
+        100'000,          // paths
+        50,               // steps
+        42                // seed
+    };
+    Result result = american_threads(p);
+    EXPECT_NEAR(result.price, 4.478, 3 * result.error);
+    EXPECT_GT(result.price, black_scholes_put(p));
+    EXPECT_GE(result.price, p.K - p.S0);
+}

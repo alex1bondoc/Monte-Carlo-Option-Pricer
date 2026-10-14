@@ -11,7 +11,7 @@ find_package(Eigen3 REQUIRED)
 find_package(benchmark REQUIRED)
 
 # biblioteca cu codul de calcul
-add_library(mc_lib src/europe.cpp src/america.cpp src/black_scholes.cpp)
+add_library(mc_lib src/europe.cpp src/america.cpp src/validation.cpp)
 target_include_directories(mc_lib PUBLIC
     include
     random123/include
