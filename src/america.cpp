@@ -115,11 +115,19 @@ Result american_threads(const Params& params, int num_threads) {
                     cash[path] = std::max(params.K - s, 0.0);
                 }
             }
+            
             sync_point.arrive_and_wait();
-            double XtX[3][3] = {0};
-            double XtY[3] = {0};
+            
             for (int step = static_cast<int>(M) - 2; step >= 0; --step) {
                 const double* S_step = &S[step * N];
+                double XtX[3][3] = {0};
+                double XtY[3] = {0};
+                if (thread_id == 0) {
+                A.setZero();
+                }
+                if (thread_id == num_threads - 1) {
+                    b.setZero();
+                }
                 for (size_t path = start; path < end; ++path) {
                     cash[path] *= disc;
                     auto s = S_step[path];
