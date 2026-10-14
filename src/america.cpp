@@ -95,17 +95,20 @@ Result american_threads(const Params& params, int num_threads) {
     // If step * paths + path all paths at the same step on cache
     std::vector<double> sums(num_threads, 0.0);
     std::vector<double> sums_sq(num_threads, 0.0);
+    std::vector<std::array<std::array<double, 3>, 3>> XtX(num_threads, {{0.0}});
+    std::vector<std::array<double, 3>> XtY(num_threads, {0.0});
     Eigen::Matrix3d A = Eigen::Matrix3d::Zero();
     Eigen::Vector3d b = Eigen::Vector3d::Zero();
     std::vector<double> S(N * M);
     std::vector<double> cash(N);
     std::vector<std::thread> threads{};
     std::barrier sync_point(num_threads);
-    std::mutex mtx;
     for (int thread_id{}; thread_id < num_threads; ++thread_id) {
         threads.emplace_back([&, thread_id]() {
             long start = (N * thread_id) / num_threads;
             long end = (N * (thread_id + 1)) / num_threads;
+            std::array<std::array<double, 3>, 3> XtX_thread{{0.0}};
+            std::array<double, 3> XtY_thread{0.0};
             for (size_t path = start; path < end; ++path) {
                 auto s = params.S0;
                 for (size_t step = 0; step < M; ++step) {
@@ -120,8 +123,8 @@ Result american_threads(const Params& params, int num_threads) {
             
             for (int step = static_cast<int>(M) - 2; step >= 0; --step) {
                 const double* S_step = &S[step * N];
-                double XtX[3][3] = {0};
-                double XtY[3] = {0};
+                XtX_thread = {{0.0}};
+                XtY_thread = {0.0};
                 if (thread_id == 0) {
                 A.setZero();
                 }
@@ -133,28 +136,36 @@ Result american_threads(const Params& params, int num_threads) {
                     auto s = S_step[path];
                     if (s < params.K) {
                         s = s / params.K;
-                        XtX[0][0]++;
-                        XtX[0][1] += s;
-                        XtX[0][2] += s * s;
-                        XtX[1][0] += s;
-                        XtX[1][1] += s * s;
-                        XtX[1][2] += s * s * s;
-                        XtX[2][0] += s * s;
-                        XtX[2][1] += s * s * s;
-                        XtX[2][2] += s * s * s * s;
-                        XtY[0] += cash[path];
-                        XtY[1] += cash[path] * s;
-                        XtY[2] += cash[path] * s * s;
+                        XtX_thread[0][0]++;
+                        XtX_thread[0][1] += s;
+                        XtX_thread[0][2] += s * s;
+                        XtX_thread[1][0] += s;
+                        XtX_thread[1][1] += s * s;
+                        XtX_thread[1][2] += s * s * s;
+                        XtX_thread[2][0] += s * s;
+                        XtX_thread[2][1] += s * s * s;
+                        XtX_thread[2][2] += s * s * s * s;
+                        XtY_thread[0] += cash[path];
+                        XtY_thread[1] += cash[path] * s;
+                        XtY_thread[2] += cash[path] * s * s;
                     }
                 }
                 sync_point.arrive_and_wait();   
-                {
-                    std::lock_guard<std::mutex> lock(mtx);
-                    for (int i = 0; i < 3; ++i) {
-                        for (int j = 0; j < 3; ++j) {
-                            A(i, j) += XtX[i][j];
-                        }
-                        b(i) += XtY[i];
+                if (thread_id == 0) {
+                    for (int i = 0; i < num_threads; ++i) {
+                        A(0, 0) += XtX_thread[0][0];
+                        A(0, 1) += XtX_thread[0][1];
+                        A(0, 2) += XtX_thread[0][2];
+                        A(1, 0) += XtX_thread[1][0];
+                        A(1, 1) += XtX_thread[1][1];
+                        A(1, 2) += XtX_thread[1][2];
+                        A(2, 0) += XtX_thread[2][0];
+                        A(2, 1) += XtX_thread[2][1];
+                        A(2, 2) += XtX_thread[2][2];
+
+                        b(0) += XtY_thread[0];
+                        b(1) += XtY_thread[1];
+                        b(2) += XtY_thread[2];
                     }
                 }
                 sync_point.arrive_and_wait();
