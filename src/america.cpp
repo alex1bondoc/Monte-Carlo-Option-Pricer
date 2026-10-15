@@ -16,6 +16,7 @@ Result american(const Params& params) {
     // If step * paths + path all paths at the same step on cache
     std::vector<double> S(N * M);
 
+    // compute trajectories with price for every step
     for (size_t path = 0; path < N; ++path) {
         auto s = params.S0;
         for (size_t step = 0; step < M; ++step) {
@@ -24,18 +25,24 @@ Result american(const Params& params) {
             S[step * N + path] = s;
         }
     }
-
+    
+    // best payoff
     std::vector<double> cash(N);
     for (size_t path = 0; path < N; ++path) {
         cash[path] = payoff(params, S[(M - 1) * N + path]);
     }
-
+    
+    // dynamic programming to compute best for every trajectory
+    // on every day
     for (int step = static_cast<int>(M) - 2; step >= 0; --step) {
         const double* S_step = &S[step * N];
         Eigen::Matrix3d A = Eigen::Matrix3d::Zero();
         Eigen::Vector3d b = Eigen::Vector3d::Zero();
         for (size_t path = 0; path < N; ++path) {
+            // what they would've won today because money tommorow isn't 
+            // money today
             cash[path] *= disc;
+            // points for b1 + b2 * x + b3 * x^2 = y
             auto s = S_step[path];
             if (payoff(params, s) > 0) {
                 s = s / params.K;
@@ -49,10 +56,12 @@ Result american(const Params& params) {
                 b(2) += cash[path] * s * s;
             }
         }
+        // less than three point so no average
         if (A(0, 0) < 3) {
             continue;
         }
 
+        // compute case where we use option today and compare to continue
         const Eigen::Vector3d beta = A.ldlt().solve(b);
         for (size_t path = 0; path < N; ++path) {
             auto s = S_step[path];
@@ -67,6 +76,7 @@ Result american(const Params& params) {
         }
     }
 
+    // same as european 
     auto sum{0.0};
     auto sum_sq{0.0};
 

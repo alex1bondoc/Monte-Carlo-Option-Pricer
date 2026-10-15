@@ -11,21 +11,28 @@ Result european(const Params& params) {
     const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
     const auto diffusion = params.sigma * std::sqrt(dt);
 
+    // sum of payoffs
     auto sum{0.0};
     auto sum_sq{0.0};
 
+
+    // simulate N trajectories
     for (long path = 0; path < params.paths; ++path) {
         auto S = params.S0;
+        // look calculate the price every day
         for (long step = 0; step < params.steps; ++step) {
             double Z = normal(params.seed, path, step);
             S *= std::exp(drift + diffusion * Z);
         }
+        // calculate the payoff for that day in a trajectory
         const auto payoff_ = payoff(params, S);
+        // total sum of payoffs
         sum += payoff_;
         sum_sq += payoff_ * payoff_;
     }
-
+    // average payoff
     const auto mean = sum / params.paths;
+    // what should be the price of the option
     const auto price = std::exp(-params.r * params.T) * mean;
     const auto error = std::exp(-params.r * params.T) * std::sqrt((sum_sq / params.paths - mean * mean) / (params.paths));
 
