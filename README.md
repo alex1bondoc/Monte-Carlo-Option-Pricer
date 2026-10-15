@@ -178,7 +178,6 @@ Machine: Intel i7-12700H (6 P-cores with hyper-threading + 8 E-cores, 20 threads
 
 ![Speedup vs number of threads](docs/speedup.png)
 
-<sub>Generated with `python3 scripts/plot_speedup.py`.</sub>
 
 **European, 1 000 000 paths**
 
