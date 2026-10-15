@@ -176,9 +176,11 @@ or `alignas(64)` padding).
 
 Machine: Intel i7-12700H (6 P-cores with hyper-threading + 8 E-cores, 20 threads), Linux, GCC, `-O3`.
 
-<!-- Fill in with: ./build/Release/mc_bench --benchmark_repetitions=5 --benchmark_report_aggregates_only=true -->
+![Speedup vs number of threads](docs/speedup.png)
 
-**European, 1 000 000 paths * 365 steps**
+<sub>Generated with `python3 scripts/plot_speedup.py`.</sub>
+
+**European, 1 000 000 paths**
 
 | Threads | Time (ms) | Speedup |
 |---|---|---|
@@ -189,7 +191,7 @@ Machine: Intel i7-12700H (6 P-cores with hyper-threading + 8 E-cores, 20 threads
 | 8 | 3071 | 4.73× |
 | 12 | 2249 | 6.46× |
 | 16 | 1910 | 7.60× |
-| 20 | 1645 | 8.83× |
+| 20 | 1645 | **8.83×** |
 
 **American (LSM), 1 000 000 paths × 365 steps**
 
@@ -202,16 +204,20 @@ Machine: Intel i7-12700H (6 P-cores with hyper-threading + 8 E-cores, 20 threads
 | 8 | 5093 | 4.03× |
 | 12 | 4090 | 5.02× |
 | 16 | 3641 | 5.64× |
-| 20 | 3407 | 6.03× |
+| 20 | 3407 | **6.03×** |
 
 **Observations**
 
-- Scaling is close to linear up to 6 threads (the 6 performance cores).
-- Between 6 and 8 threads the curve flattens: the extra threads land on the slower efficiency cores
-  or share a P-core via hyper-threading. With **static** partitioning (equal blocks of paths), the
-  slowest thread decides the total time.
-- The 1-thread parallel version is about 10% slower than the serial one (thread creation and
-  barrier overhead).
+- **Up to 6 threads** scaling is close to linear: every thread gets its own performance core.
+- **From 6 to 8 threads the curve flattens** (European 4.37× → 4.73×, American 3.82× → 4.03×).
+  Threads 7 and 8 land on the slower efficiency cores. With **static** partitioning (equal blocks of
+  paths) every thread gets the same amount of work, so the slowest thread decides the total time.
+- **From 8 to 20 threads** the speedup grows again, but more slowly: the extra threads come from
+  hyper-threading (two threads sharing one P-core) and the remaining E-cores.
+- **The American pricer scales worse** (6.0× vs 8.8×):
+  - each of the 365 steps has barriers, and thread 0 solves the regression alone while the others wait;
+  - the path matrix (1M × 365 doubles ≈ 2.9 GB) is streamed from memory on every backward step, so
+    memory bandwidth becomes a limit, not just the cores.
 
 ---
 
@@ -260,6 +266,8 @@ src/
 tests/          GoogleTest
 benchmarks/     Google Benchmark
 random123/      Random123 (git submodule, header-only)
+scripts/        plot_speedup.py (generates docs/speedup.png)
+docs/           images for this README
 conanfile.txt   GoogleTest, Google Benchmark, Eigen
 .github/        CI: build + tests on every push
 ```
@@ -274,10 +282,24 @@ conanfile.txt   GoogleTest, Google Benchmark, Eigen
 - [x] GoogleTest, Google Benchmark, CI
 - [ ] Greeks: Delta, Gamma, Vega, Rho (bump-and-reprice with common random numbers vs closed form)
 - [ ] Command-line interface (CLI11)
+- [x] Speedup plots
 - [ ] Optimization study: mutex vs atomic vs local accumulators, static vs dynamic scheduling on a
       hybrid CPU, memory layout of the path matrix
-- [ ] Speedup plots
-- [ ] MPI (`MPI_Allreduce` on the regression sums) and CUDA
+
+### Other parallel back ends, compared against the `std::thread` version
+
+- [ ] **OpenMP**: `#pragma omp parallel for reduction(+:sum)` for the European pricer, and
+      `omp barrier` / `omp single` for the LSM regression step. The goal is to compare a few pragmas
+      with the hand-written threads and barriers on both speed and code size.
+- [ ] **Custom thread pool with C++20 coroutines**: a fixed pool of worker threads and a task queue;
+      work is split into chunks of paths that are `co_await`ed, and `when_all` replaces the barrier.
+      Small chunks give **dynamic load balancing**, which should fix the plateau between 6 and 8
+      threads on the hybrid P/E-core CPU.
+- [ ] **CUDA**: one GPU thread per path. Philox needs no state, so every thread generates its own
+      numbers from `(seed, path, step)`, the same as on the CPU. The regression sums become a
+      parallel reduction on the GPU, and the 3×3 system is still solved on the CPU.
+      The result can be checked against the CPU price with the same seed.
+- [ ] **MPI**: paths split across machines, `MPI_Allreduce` on the 12 regression sums per step.
 
 ## References
 
