@@ -178,31 +178,31 @@ Machine: Intel i7-12700H (6 P-cores with hyper-threading + 8 E-cores, 20 threads
 
 <!-- Fill in with: ./build/Release/mc_bench --benchmark_repetitions=5 --benchmark_report_aggregates_only=true -->
 
-**European, 1 000 000 paths**
+**European, 1 000 000 paths * 365 steps**
 
 | Threads | Time (ms) | Speedup |
 |---|---|---|
-| 1 | | 1.0× |
-| 2 | | |
-| 4 | | |
-| 6 | | |
-| 8 | | |
-| 12 | | |
-| 16 | | |
-| 20 | | |
+| 1 | 14519 | 1.0× |
+| 2 | 7619 | 1.91× |
+| 4 | 4516 | 3.21× |
+| 6 | 3326 | 4.37× |
+| 8 | 3071 | 4.73× |
+| 12 | 2249 | 6.46× |
+| 16 | 1910 | 7.60× |
+| 20 | 1645 | 8.83× |
 
-**American (LSM), 100 000 paths × 50 steps**
+**American (LSM), 1 000 000 paths × 365 steps**
 
 | Threads | Time (ms) | Speedup |
 |---|---|---|
-| 1 (serial) | | 1.0× |
-| 2 | | |
-| 4 | | |
-| 6 | | |
-| 8 | | |
-| 12 | | |
-| 16 | | |
-| 20 | | |
+| 1 | 20549 | 1.0× |
+| 2 | 10709 | 1.92× |
+| 4 | 6973 | 2.95× |
+| 6 | 5385 | 3.82× |
+| 8 | 5093 | 4.03× |
+| 12 | 4090 | 5.02× |
+| 16 | 3641 | 5.64× |
+| 20 | 3407 | 6.03× |
 
 **Observations**
 
