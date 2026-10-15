@@ -9,7 +9,7 @@
 Result european(const Params& params) {
     const auto dt = params.T / params.steps;
     const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
-    const auto volatility = params.sigma * std::sqrt(dt);
+    const auto diffusion = params.sigma * std::sqrt(dt);
 
     auto sum{0.0};
     auto sum_sq{0.0};
@@ -18,7 +18,7 @@ Result european(const Params& params) {
         auto S = params.S0;
         for (long step = 0; step < params.steps; ++step) {
             double Z = normal(params.seed, path, step);
-            S *= std::exp(drift + volatility * Z);
+            S *= std::exp(drift + diffusion * Z);
         }
         const auto payoff_ = payoff(params, S);
         sum += payoff_;
@@ -35,13 +35,13 @@ Result european(const Params& params) {
 Result european_threads(const Params& params, int num_threads) {
     const auto dt = params.T / params.steps;
     const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
-    const auto volatility = params.sigma * std::sqrt(dt);
+    const auto diffusion = params.sigma * std::sqrt(dt);
 
     std::vector<double> sums(num_threads, 0.0);
     std::vector<double> sums_sq(num_threads, 0.0);
     std::vector<std::thread> threads{};
     for (int thread_id{}; thread_id < num_threads; ++thread_id) {
-        threads.emplace_back([&sums, &sums_sq, &params, &drift, &volatility, num_threads, thread_id]() {
+        threads.emplace_back([&sums, &sums_sq, &params, &drift, &diffusion, num_threads, thread_id]() {
             long start = (params.paths * thread_id) / num_threads;
             long end = (params.paths * (thread_id + 1)) / num_threads;
             double sum{};
@@ -50,7 +50,7 @@ Result european_threads(const Params& params, int num_threads) {
                 auto S = params.S0;
                 for (long step = 0; step < params.steps; ++step) {
                     double Z = normal(params.seed, path, step);
-                    S *= std::exp(drift + volatility * Z);
+                    S *= std::exp(drift + diffusion * Z);
                 }
                 const auto payoff_ = payoff(params, S);
                 sum += payoff_;

@@ -7,7 +7,7 @@
 Result american(const Params& params) {
     const auto dt = params.T / params.steps;
     const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
-    const auto volatility = params.sigma * std::sqrt(dt);
+    const auto diffusion = params.sigma * std::sqrt(dt);
     const auto disc = std::exp(-params.r * dt);
 
     size_t N{params.paths};
@@ -20,7 +20,7 @@ Result american(const Params& params) {
         auto s = params.S0;
         for (size_t step = 0; step < M; ++step) {
             double Z = normal(params.seed, path, step);
-            s *= std::exp(drift + volatility * Z);
+            s *= std::exp(drift + diffusion * Z);
             S[step * N + path] = s;
         }
     }
@@ -86,7 +86,7 @@ Result american(const Params& params) {
 Result american_threads(const Params& params, int num_threads) {
     const auto dt = params.T / params.steps;
     const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
-    const auto volatility = params.sigma * std::sqrt(dt);
+    const auto diffusion = params.sigma * std::sqrt(dt);
     const auto disc = std::exp(-params.r * dt);
 
     size_t N{params.paths};
@@ -113,7 +113,7 @@ Result american_threads(const Params& params, int num_threads) {
                 auto s = params.S0;
                 for (size_t step = 0; step < M; ++step) {
                     double Z = normal(params.seed, path, step);
-                    s *= std::exp(drift + volatility * Z);
+                    s *= std::exp(drift + diffusion * Z);
                     S[step * N + path] = s;
                     cash[path] = payoff(params, s);
                 }
