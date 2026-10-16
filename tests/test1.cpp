@@ -4,7 +4,6 @@
 
 static Option make_option(OptionType type) {
     return Option{
-        36.0,   // S0
         40.0,   // K
         1.0,    // T
         type    // type
@@ -12,6 +11,7 @@ static Option make_option(OptionType type) {
 }
 
 static const MarketData market{
+    36.0,   // S0
     0.06,   // r
     0.2     // sigma
 };
@@ -67,7 +67,7 @@ TEST(American, Put) {
     Result result = american(option, market, american_simulation);
     EXPECT_NEAR(result.price, 4.478, 3 * result.error);
     EXPECT_GT(result.price, black_scholes_put(option, market, american_simulation));
-    EXPECT_GE(result.price, option.K - option.S0);
+    EXPECT_GE(result.price, option.K - market.S0);
 }
 
 TEST(American, Call) {
@@ -87,5 +87,5 @@ TEST(American_Threads, Put) {
     Result result = american_threads(option, market, american_simulation);
     EXPECT_NEAR(result.price, 4.478, 3 * result.error);
     EXPECT_GT(result.price, black_scholes_put(option, market, american_simulation));
-    EXPECT_GE(result.price, option.K - option.S0);
+    EXPECT_GE(result.price, option.K - market.S0);
 }

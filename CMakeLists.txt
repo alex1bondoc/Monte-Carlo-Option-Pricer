@@ -9,6 +9,7 @@ find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(benchmark REQUIRED)
+find_package(CLI11 REQUIRED)
 
 # biblioteca cu codul de calcul
 add_library(mc_lib src/europe.cpp src/america.cpp src/validation.cpp)
@@ -16,7 +17,7 @@ target_include_directories(mc_lib PUBLIC
     include
     random123/include
 )
-target_link_libraries(mc_lib PUBLIC Threads::Threads Eigen3::Eigen)
+target_link_libraries(mc_lib PUBLIC Threads::Threads Eigen3::Eigen CLI11::CLI11)
 
 # programul
 add_executable(mc src/main.cpp)

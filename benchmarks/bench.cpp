@@ -2,13 +2,13 @@
 #include "functions.hpp"
 
 static const Option option{
-    36.0,               // S0
     40.0,               // K
     1.0,                // T
     OptionType::Call    // type
 };
 
 static const MarketData market{
+    36.0,   // S0
     0.06,   // r
     0.2     // sigma
 };

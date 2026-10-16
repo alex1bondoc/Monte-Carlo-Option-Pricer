@@ -19,7 +19,7 @@ Result american(const Option& option, const MarketData& market, const Simulation
 
     // compute trajectories with price for every step
     for (size_t path = 0; path < N; ++path) {
-        auto s = option.S0;
+        auto s = market.S0;
         for (size_t step = 0; step < M; ++step) {
            double Z = normal(simulation.seed, path, step);
             s *= std::exp(drift + diffusion * Z);
@@ -91,7 +91,7 @@ Result american(const Option& option, const MarketData& market, const Simulation
     const auto price = std::exp(-market.r * option.T) * mean;
     const auto error = std::sqrt((sum_sq / N - mean * mean) / (N));
 
-    return {std::max(mean, option.payoff(option.S0)), error};
+    return {std::max(mean, option.payoff(market.S0)), error};
 }
 
 Result american_threads(const Option& option, const MarketData& market, const SimulationData& simulation, int num_threads) {
@@ -121,7 +121,7 @@ Result american_threads(const Option& option, const MarketData& market, const Si
             std::array<std::array<double, 3>, 3> XtX_thread{{0.0}};
             std::array<double, 3> XtY_thread{0.0};
             for (size_t path = start; path < end; ++path) {
-                auto s = option.S0;
+                auto s = market.S0;
                 for (size_t step = 0; step < M; ++step) {
                     double Z = normal(simulation.seed, path, step);
                     s *= std::exp(drift + diffusion * Z);
@@ -231,5 +231,5 @@ Result american_threads(const Option& option, const MarketData& market, const Si
     const auto price = std::exp(-market.r * option.T) * mean;
     const auto error = std::sqrt((sum_sq / N - mean * mean) / (N));
 
-    return {std::max(mean, option.payoff(option.S0)), error};
+    return {std::max(mean, option.payoff(market.S0)), error};
 }

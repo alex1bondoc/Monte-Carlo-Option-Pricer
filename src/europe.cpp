@@ -17,7 +17,7 @@ Result european(const Option& option, const MarketData& market, const Simulation
 
     // simulate N trajectories
     for (long path = 0; path < simulation.paths; ++path) {
-        auto S = option.S0;
+        auto S = market.S0;
         // look calculate the price every day
         for (long step = 0; step < simulation.steps; ++step) {
             double Z = normal(simulation.seed, path, step);
@@ -47,13 +47,13 @@ Result european_threads(const Option& option, const MarketData& market, const Si
     std::vector<double> sums_sq(num_threads, 0.0);
     std::vector<std::thread> threads{};
     for (int thread_id{}; thread_id < num_threads; ++thread_id) {
-        threads.emplace_back([&sums, &sums_sq, &option, &simulation, &drift, &diffusion, num_threads, thread_id]() {
+        threads.emplace_back([&sums, &sums_sq, &option, &market, &simulation, &drift, &diffusion, num_threads, thread_id]() {
             long start = (simulation.paths * thread_id) / num_threads;
             long end = (simulation.paths * (thread_id + 1)) / num_threads;
             double sum{};
             double sum_sq{};
             for (long path = start; path < end; ++path) {
-                auto S = option.S0;
+                auto S = market.S0;
                 for (long step = 0; step < simulation.steps; ++step) {
                     double Z = normal(simulation.seed, path, step);
                     S *= std::exp(drift + diffusion * Z);

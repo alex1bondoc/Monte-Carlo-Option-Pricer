@@ -9,7 +9,6 @@ enum class OptionType {
 
 class Option {
 public:
-    double S0{};                // stock price today
     double K{};                 // strike (fixed price)
     double T{};                 // time till strike in years
     OptionType option_type{};
@@ -22,6 +21,7 @@ public:
 
 class MarketData {
 public:
+    double S0{};                // stock price today
     double r{};                 // interest 
     double sigma{};             // volatility
 };
