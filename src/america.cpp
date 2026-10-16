@@ -1,26 +1,27 @@
 #include "functions.hpp"
+#include "params.hpp"
 #include <vector>
 #include <Eigen/Dense>
 #include <thread>
 #include <barrier>
 
-Result american(const Params& params) {
-    const auto dt = params.T / params.steps;
-    const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
-    const auto diffusion = params.sigma * std::sqrt(dt);
-    const auto disc = std::exp(-params.r * dt);
+Result american(const Option& option, const MarketData& market, const SimulationData& simulation) {
+    const auto dt = option.T / simulation.steps;
+    const auto drift = (market.r - 0.5 * market.sigma * market.sigma) * dt;
+    const auto diffusion = market.sigma * std::sqrt(dt);
+    const auto disc = std::exp(-market.r * dt);
 
-    size_t N{params.paths};
-    size_t M{params.steps};
+    size_t N{static_cast<size_t>(simulation.paths)};
+    size_t M{static_cast<size_t>(simulation.steps)};
 
     // If step * paths + path all paths at the same step on cache
     std::vector<double> S(N * M);
 
     // compute trajectories with price for every step
     for (size_t path = 0; path < N; ++path) {
-        auto s = params.S0;
+        auto s = option.S0;
         for (size_t step = 0; step < M; ++step) {
-            double Z = normal(params.seed, path, step);
+           double Z = normal(simulation.seed, path, step);
             s *= std::exp(drift + diffusion * Z);
             S[step * N + path] = s;
         }
@@ -29,7 +30,7 @@ Result american(const Params& params) {
     // best payoff
     std::vector<double> cash(N);
     for (size_t path = 0; path < N; ++path) {
-        cash[path] = payoff(params, S[(M - 1) * N + path]);
+        cash[path] = option.payoff(S[(M - 1) * N + path]);
     }
     
     // dynamic programming to compute best for every trajectory
@@ -44,8 +45,8 @@ Result american(const Params& params) {
             cash[path] *= disc;
             // points for b1 + b2 * x + b3 * x^2 = y
             auto s = S_step[path];
-            if (payoff(params, s) > 0) {
-                s = s / params.K;
+            if (option.payoff(s) > 0) {
+                s = s / option.K;
                 A(0, 0)++;
                 A(0, 1) = A(1, 0) = (A(0, 1) + s); 
                 A(0, 2) = A(2, 0) = A(1, 1) = (A(0, 2) + s * s);
@@ -65,9 +66,9 @@ Result american(const Params& params) {
         const Eigen::Vector3d beta = A.ldlt().solve(b);
         for (size_t path = 0; path < N; ++path) {
             auto s = S_step[path];
-            const double exercise_value = payoff(params, s);
+            const double exercise_value = option.payoff(s);
             if (exercise_value > 0) {
-                s = s / params.K;
+                s = s / option.K;
                 double continuation_value = beta(0) + beta(1) * s + beta(2) * s * s;
                 if (exercise_value > continuation_value) {
                     cash[path] = exercise_value;
@@ -87,20 +88,20 @@ Result american(const Params& params) {
     }
 
     const auto mean = sum / N;
-    const auto price = std::exp(-params.r * params.T) * mean;
+    const auto price = std::exp(-market.r * option.T) * mean;
     const auto error = std::sqrt((sum_sq / N - mean * mean) / (N));
 
-    return {std::max(mean, payoff(params, params.S0)), error};
+    return {std::max(mean, option.payoff(option.S0)), error};
 }
 
-Result american_threads(const Params& params, int num_threads) {
-    const auto dt = params.T / params.steps;
-    const auto drift = (params.r - 0.5 * params.sigma * params.sigma) * dt;
-    const auto diffusion = params.sigma * std::sqrt(dt);
-    const auto disc = std::exp(-params.r * dt);
+Result american_threads(const Option& option, const MarketData& market, const SimulationData& simulation, int num_threads) {
+    const auto dt = option.T / simulation.steps;
+    const auto drift = (market.r - 0.5 * market.sigma * market.sigma) * dt;
+    const auto diffusion = market.sigma * std::sqrt(dt);
+    const auto disc = std::exp(-market.r * dt);
 
-    size_t N{params.paths};
-    size_t M{params.steps};
+    size_t N{static_cast<size_t>(simulation.paths)};
+    size_t M{static_cast<size_t>(simulation.steps)};
 
     // If step * paths + path all paths at the same step on cache
     std::vector<double> sums(num_threads, 0.0);
@@ -120,12 +121,12 @@ Result american_threads(const Params& params, int num_threads) {
             std::array<std::array<double, 3>, 3> XtX_thread{{0.0}};
             std::array<double, 3> XtY_thread{0.0};
             for (size_t path = start; path < end; ++path) {
-                auto s = params.S0;
+                auto s = option.S0;
                 for (size_t step = 0; step < M; ++step) {
-                    double Z = normal(params.seed, path, step);
+                    double Z = normal(simulation.seed, path, step);
                     s *= std::exp(drift + diffusion * Z);
                     S[step * N + path] = s;
-                    cash[path] = payoff(params, s);
+                    cash[path] = option.payoff(s);
                 }
             }
             
@@ -144,8 +145,8 @@ Result american_threads(const Params& params, int num_threads) {
                 for (size_t path = start; path < end; ++path) {
                     cash[path] *= disc;
                     auto s = S_step[path];
-                    if (payoff(params, s) > 0) {
-                        s = s / params.K;
+                    if (option.payoff(s) > 0) {
+                        s = s / option.K;
                         XtX_thread[0][0]++;
                         XtX_thread[0][1] += s;
                         XtX_thread[0][2] += s * s;
@@ -162,7 +163,9 @@ Result american_threads(const Params& params, int num_threads) {
                 }
                 XtX[thread_id] = XtX_thread;
                 XtY[thread_id] = XtY_thread;
+                
                 sync_point.arrive_and_wait();   
+
                 if (thread_id == 0) {
                     for (int i = 0; i < num_threads; ++i) {
                         A(0, 0) += XtX[i][0][0];
@@ -180,17 +183,19 @@ Result american_threads(const Params& params, int num_threads) {
                         b(2) += XtY[i][2];
                     }
                 }
+
                 sync_point.arrive_and_wait();
+
                 if (A(0, 0) < 3) {
                     continue;
                 }
                 const Eigen::Vector3d beta = A.ldlt().solve(b);
                 for (size_t path = start; path < end; ++path) {
                     auto s = S_step[path];
-                    if (payoff(params, s) > 0) {
-                        const double x = s / params.K;
+                    if (option.payoff(s) > 0) {
+                        const double x = s / option.K;
                         double continuation_value = beta(0) + beta(1) * x + beta(2) * x * x;
-                        double exercise_value = payoff(params, s);
+                        double exercise_value = option.payoff(s);
                         if (exercise_value > continuation_value) {
                             cash[path] = exercise_value;
                         }
@@ -199,8 +204,8 @@ Result american_threads(const Params& params, int num_threads) {
                 sync_point.arrive_and_wait();
                 auto sum{0.0};
                 auto sum_sq{0.0};
-                for (long path = start; path < end; ++path) {
-                    auto payoff = cash[path] * disc;
+                for (size_t path = start; path < end; ++path) {
+                    const auto payoff = cash[path] * disc;
                     sum += payoff;
                     sum_sq += payoff * payoff;
                 }
@@ -223,8 +228,8 @@ Result american_threads(const Params& params, int num_threads) {
     }
 
     const auto mean = sum / N;
-    const auto price = std::exp(-params.r * params.T) * mean;
+    const auto price = std::exp(-market.r * option.T) * mean;
     const auto error = std::sqrt((sum_sq / N - mean * mean) / (N));
 
-    return {std::max(mean, payoff(params, params.S0)), error};
+    return {std::max(mean, option.payoff(option.S0)), error};
 }

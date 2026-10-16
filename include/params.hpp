@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstdint>
 
 enum class OptionType {
@@ -6,16 +7,34 @@ enum class OptionType {
     Put
 };
 
-class Params {
+class Option {
 public:
     double S0{};                // stock price today
     double K{};                 // strike (fixed price)
-    double r{};                 // interest
-    double sigma{};             // volatility
-    double T{};                 // time (years)
-    OptionType option_type{};   // type of option
+    double T{};
+    OptionType option_type{};
 
-    long paths{};               // number of simulations
-    long steps{};               // number of days 
-    uint32_t seed{};            // philox seed
+    double payoff(const double S) const {
+        return (option_type == OptionType::Call) ? std::max(S - K, 0.0)
+                                                : std::max(K - S, 0.0);
+    }
+};
+
+class MarketData {
+public:
+    double r{};
+    double sigma{};
+};
+
+class SimulationData {
+public:
+    long paths{};
+    long steps{};
+    uint32_t seed{};
+};
+
+class Result {
+public:
+    double price{};
+    double error{};
 };

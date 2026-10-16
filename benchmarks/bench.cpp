@@ -1,19 +1,30 @@
 #include <benchmark/benchmark.h>
 #include "functions.hpp"
 
-static Params make_params(long paths, long steps) {
-    Params p{};
-    p.S0 = 36.0; p.K = 40.0; p.r = 0.06; p.sigma = 0.2; p.T = 1.0;
-    p.paths = paths;
-    p.steps = steps;
-    p.seed  = 42;
-    return p;
+static const Option option{
+    36.0,               // S0
+    40.0,               // K
+    1.0,                // T
+    OptionType::Call    // type
+};
+
+static const MarketData market{
+    0.06,   // r
+    0.2     // sigma
+};
+
+static SimulationData make_simulation(long paths, long steps) {
+    SimulationData s{};
+    s.paths = paths;
+    s.steps = steps;
+    s.seed  = 42;
+    return s;
 }
 
 static void benchmark_european(benchmark::State& state) {
-    const Params p = make_params(state.range(0), state.range(1));
+    const SimulationData s = make_simulation(state.range(0), state.range(1));
     for (auto _ : state) {
-        benchmark::DoNotOptimize(european(p));
+        benchmark::DoNotOptimize(european(option, market, s));
     }
 }
 BENCHMARK(benchmark_european)
@@ -21,10 +32,10 @@ BENCHMARK(benchmark_european)
     ->Unit(benchmark::kMillisecond);
 
 static void benchmark_european_threads(benchmark::State& state) {
-    const Params p = make_params(state.range(0), state.range(1));
+    const SimulationData s = make_simulation(state.range(0), state.range(1));
     const int num_threads = static_cast<int>(state.range(2));
     for (auto _ : state) {
-        benchmark::DoNotOptimize(european_threads(p, num_threads));
+        benchmark::DoNotOptimize(european_threads(option, market, s, num_threads));
     }
 }
 BENCHMARK(benchmark_european_threads)
@@ -33,9 +44,9 @@ BENCHMARK(benchmark_european_threads)
     ->Unit(benchmark::kMillisecond);
 
 static void benchmark_american(benchmark::State& state) {
-    const Params p = make_params(state.range(0), state.range(1));
+    const SimulationData s = make_simulation(state.range(0), state.range(1));
     for (auto _ : state) {
-        benchmark::DoNotOptimize(american(p));
+        benchmark::DoNotOptimize(american(option, market, s));
     }
 }
 
@@ -45,10 +56,10 @@ BENCHMARK(benchmark_american)
     ->Unit(benchmark::kMillisecond);
 
 static void benchmark_american_threads(benchmark::State& state) {
-    const Params p = make_params(state.range(0), state.range(1));
+    const SimulationData s = make_simulation(state.range(0), state.range(1));
     const int num_threads = static_cast<int>(state.range(2));
     for (auto _ : state) {
-        benchmark::DoNotOptimize(american_threads(p, num_threads));
+        benchmark::DoNotOptimize(american_threads(option, market, s, num_threads));
     }
 }
 
