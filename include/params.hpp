@@ -11,7 +11,7 @@ class Option {
 public:
     double S0{};                // stock price today
     double K{};                 // strike (fixed price)
-    double T{};
+    double T{};                 // time till strike in years
     OptionType option_type{};
 
     double payoff(const double S) const {
@@ -22,15 +22,15 @@ public:
 
 class MarketData {
 public:
-    double r{};
-    double sigma{};
+    double r{};                 // interest 
+    double sigma{};             // volatility
 };
 
 class SimulationData {
 public:
-    long paths{};
-    long steps{};
-    uint32_t seed{};
+    long paths{};               // number of simultaion
+    long steps{};               // days of simulation
+    uint32_t seed{};            // seed for random number
 };
 
 class Result {
