@@ -3,7 +3,8 @@
 Pricing **European** and **American** options with Monte Carlo simulation, serial and multithreaded
 (`std::thread` + `std::barrier`). American options use the **Longstaff-Schwartz** least-squares
 Monte Carlo algorithm (LSM, 2001). Every result is validated against a closed-form or published
-reference, and the parallel versions return **exactly the same price** as the serial ones.
+reference, and the parallel versions return the same price as the serial ones, identical up to 
+floating-point summation order (1e-14).
 
 | | |
 |---|---|
@@ -280,7 +281,7 @@ conanfile.txt   GoogleTest, Google Benchmark, Eigen
 - [x] Reproducible counter-based RNG (parallel == serial)
 - [x] GoogleTest, Google Benchmark, CI
 - [ ] Greeks: Delta, Gamma, Vega, Rho (bump-and-reprice with common random numbers vs closed form)
-- [ ] Command-line interface (CLI11)
+- [x] Command-line interface (CLI11)
 - [x] Speedup plots
 - [ ] Optimization study: mutex vs atomic vs local accumulators, static vs dynamic scheduling on a
       hybrid CPU, memory layout of the path matrix
