@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "functions.hpp"
+#include "params.hpp"
 #include "validation.hpp"
 
 static Option make_option(OptionType type) {
@@ -88,4 +89,18 @@ TEST(American_Threads, Put) {
     EXPECT_NEAR(result.price, 4.478, 3 * result.error);
     EXPECT_GT(result.price, black_scholes_put(option, market, american_simulation));
     EXPECT_GE(result.price, option.K - market.S0);
+}
+
+TEST(Consistency, European) {
+    const Option option = make_option(OptionType::Put);
+    Result result1 = european(option, market, european_simulation);
+    Result resutl2 = european_threads(option, market, european_simulation);
+    EXPECT_NEAR(result1.price, resutl2.price, 1e-10);
+}
+
+TEST(Consistency, American) {
+    const Option option = make_option(OptionType::Put);
+    Result result1 = american(option, market, european_simulation);
+    Result resutl2 = american_threads(option, market, european_simulation);
+    EXPECT_NEAR(result1.price, resutl2.price, 1e-10);
 }

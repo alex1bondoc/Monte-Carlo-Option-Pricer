@@ -185,22 +185,21 @@ Result american_threads(const Option& option, const MarketData& market, const Si
                 }
 
                 sync_point.arrive_and_wait();
-
-                if (A(0, 0) < 3) {
-                    continue;
-                }
-                const Eigen::Vector3d beta = A.ldlt().solve(b);
-                for (size_t path = start; path < end; ++path) {
-                    auto s = S_step[path];
-                    if (option.payoff(s) > 0) {
-                        const double x = s / option.K;
-                        double continuation_value = beta(0) + beta(1) * x + beta(2) * x * x;
-                        double exercise_value = option.payoff(s);
-                        if (exercise_value > continuation_value) {
-                            cash[path] = exercise_value;
+                if (A(0, 0) >= 3) {
+                    const Eigen::Vector3d beta = A.ldlt().solve(b);
+                    for (size_t path = start; path < end; ++path) {
+                        auto s = S_step[path];
+                        if (option.payoff(s) > 0) {
+                            const double x = s / option.K;
+                            double continuation_value = beta(0) + beta(1) * x + beta(2) * x * x;
+                            double exercise_value = option.payoff(s);
+                            if (exercise_value > continuation_value) {
+                                cash[path] = exercise_value;
+                            }
                         }
                     }
                 }
+                else continue;
                 sync_point.arrive_and_wait();
                 auto sum{0.0};
                 auto sum_sq{0.0};
