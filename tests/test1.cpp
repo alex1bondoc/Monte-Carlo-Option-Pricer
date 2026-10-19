@@ -104,3 +104,10 @@ TEST(Consistency, American) {
     Result resutl2 = american_threads(option, market, european_simulation);
     EXPECT_NEAR(result1.price, resutl2.price, 1e-10);
 }
+
+TEST(Consistency, AmericanOTM) {
+    const Option option{30.0, 1.0, OptionType::Put};
+    const SimulationData sim{20'000, 50, 42};
+    EXPECT_NEAR(american(option, market, sim).price,
+                american_threads(option, market, sim, 4).price, 1e-10);
+}
