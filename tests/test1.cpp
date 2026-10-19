@@ -100,8 +100,8 @@ TEST(Consistency, European) {
 
 TEST(Consistency, American) {
     const Option option = make_option(OptionType::Put);
-    Result result1 = american(option, market, european_simulation);
-    Result resutl2 = american_threads(option, market, european_simulation);
+    Result result1 = american(option, market, american_simulation);
+    Result resutl2 = american_threads(option, market, american_simulation);
     EXPECT_NEAR(result1.price, resutl2.price, 1e-10);
 }
 
