@@ -199,7 +199,7 @@ Result american_threads(const Option& option, const MarketData& market, const Si
                         }
                     }
                 }
-                else continue;
+                
                 sync_point.arrive_and_wait();
                 auto sum{0.0};
                 auto sum_sq{0.0};
